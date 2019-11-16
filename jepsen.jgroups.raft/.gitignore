@@ -7,5 +7,10 @@ pom.xml.asc
 *.class
 /.lein-*
 /.nrepl-port
-.hgignore
-.hg/
+
+# idea
+.idea/
+*.iml
+
+# jepsen
+store/
