@@ -1,49 +1,53 @@
 (ns jepsen.jgroups.raft
   (:require [clojure.tools.logging :refer :all]
             [clojure.string :as str]
+            [clojure.java.shell :refer [sh]]
+            [clojure.java.io :as io]
             [jepsen [cli :as cli]
              [control :as c]
+             [core :as core]
              [db :as db]
              [tests :as tests]]
             [jepsen.control.util :as cu]
-            [jepsen.os.debian :as debian])
-  (:import
-    (org.jgroups JChannel)
-    (org.jgroups.blocks.atomic Counter)
-    (org.jgroups.raft.blocks CounterService)))
+            [jepsen.os.debian :as debian]))
 
+(def counter-src "counter")
 
-(defn provide-name
+(def counter-jar (str counter-src"/target/counter-0.1.0-SNAPSHOT-standalone.jar"))
+
+(def test-dir "/opt/counter")
+
+(def test-jar (str test-dir "counter.jar"))
+
+(defn upload!
+  "Upload counter jar on nodes."
   []
-  (throw (Exception. "You have to provice node name via -name argument.")))
+  (c/exec :mkdir :-p test-dir)
+  (c/cd test-dir
+        (c/upload (.getCanonicalPath (io/file counter-jar)) test-jar)))
 
-(def raft-config "raft.xml")
-
-(defn jchannel
-  [props, name]
-  (-> (JChannel. props) (.name name)))
-
-(defn jcnt
-  [jch]
-  (-> (CounterService. jch) (.raftId (.name jch)) (.replTimeout 5000) (.getOrCreateCounter "counter" 0)))
-
-(defn join-channel
-  [jch]
-  (.connect jch "counters"))
-
-(defn start-counter
-  [props, name]
-  (let [jch (jchannel props name),
-        cnt (jcnt jch)]
-    (join-channel jch)
-    cnt))
+(defn build-counter!
+  "Ensures the server jar is ready"
+  [test node]
+  (when (= node (core/primary test))
+    (when-not (.exists (io/file counter-jar))
+      (info "Building counter")
+      (let [{:keys [exit out err]} (sh "lein" "uberjar" :dir counter-src)]
+        (info out)
+        (info err)
+        (info exit)
+        (assert (zero? exit))))))
 
 (defn counter
   []
   (reify db/DB
          (setup! [_ test node]
+                 (build-counter! test node)
+                 ;(debian/install-jdk11!)
+                 (upload!)
                  (info node "Starting JGroups counter")
-                 (start-counter raft-config node))
+                 ;(start-counter raft-config node)
+                 )
 
          (teardown! [_ test node]
                     ;; TODO: stop jch here
