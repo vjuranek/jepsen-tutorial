@@ -16,6 +16,9 @@
 (def counter-jar (str counter-src "/target/counter-0.1.0-SNAPSHOT-standalone.jar"))
 (def test-dir "/opt/counter")
 (def test-jar (str test-dir "counter.jar"))
+(def pid-file (str test-dir "/counter.pid"))
+(def log-file (str test-dir "/counter.log"))
+
 
 (defn upload!
   "Upload counter jar on nodes."
@@ -51,6 +54,23 @@
     (teardown! [_ test node]
                ;; TODO: stop jch here
                (info node "Stopping JGroups counter - no-op for now"))))
+
+(defn start!
+  [test node]
+  (c/cd dir
+        (cu/start-daemon!
+         {:chdir   dir
+          :logfile log-file
+          :pidfile pid-file}
+         "/usr/bin/java"
+         :-jar   test-jar
+         :--name node)))
+
+(defn stop!
+  [test node]
+  (c/cd dir
+        (c/su
+         (cu/stop-daemon! pid-file))))
 
 (defn counter-test
   [opts]
