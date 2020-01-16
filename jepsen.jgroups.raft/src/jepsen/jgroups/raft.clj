@@ -39,6 +39,23 @@
         (info exit)
         (assert (zero? exit))))))
 
+(defn start-counter!
+  [node]
+  (c/cd test-dir
+        (cu/start-daemon!
+         {:chdir   test-dir
+          :logfile log-file
+          :pidfile pid-file}
+         "/usr/bin/java"
+         :-jar   test-jar
+         :--name node)))
+
+(defn stop-counter!
+  []
+  (c/cd test-dir
+        (c/su
+         (cu/stop-daemon! pid-file))))
+
 (defn counter
   []
   (reify
@@ -50,28 +67,14 @@
            (core/synchronize test) ;; ensure build is on all nodes
            (info node "Starting JGroups counter")
            ;(start-counter raft-config node))
-           )
+           (start-counter! node))
 
    (teardown! [counter test node]
               ;; TODO: stop jch here
-              (info node "Stopping JGroups counter - no-op for now"))))
-
-(defn start!
-  [test node]
-  (c/cd test-dir
-        (cu/start-daemon!
-         {:chdir   test-dir
-          :logfile log-file
-          :pidfile pid-file}
-         "/usr/bin/java"
-         :-jar   test-jar
-         :--name node)))
-
-(defn stop!
-  [test node]
-  (c/cd test-dir
-        (c/su
-         (cu/stop-daemon! pid-file))))
+              (info node "Stopping JGroups counter - no-op for now")
+              (stop-counter!)
+              (c/su
+               (c/exec :rm :-rf log-file pid-file)))))
 
 (defn counter-test
   [opts]
