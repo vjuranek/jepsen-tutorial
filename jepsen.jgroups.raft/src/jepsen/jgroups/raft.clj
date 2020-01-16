@@ -42,24 +42,25 @@
 (defn counter
   []
   (reify
-    db/DB
-    (setup! [_ test node]
-            (build-counter! test node)
-            (debian/install-jdk11!)
-            (upload!)
-            (jepsen/synchronize test) ;; ensure build is on all nodes
-            (info node "Starting JGroups counter")
-            ;(start-counter raft-config node))
+   db/DB
+   (setup! [_ test node]
+           (build-counter! test node)
+           (debian/install-jdk11!)
+           (upload!)
+           (core/synchronize test) ;; ensure build is on all nodes
+           (info node "Starting JGroups counter")
+           ;(start-counter raft-config node))
+           )
 
-    (teardown! [_ test node]
-               ;; TODO: stop jch here
-               (info node "Stopping JGroups counter - no-op for now"))))
+   (teardown! [counter test node]
+              ;; TODO: stop jch here
+              (info node "Stopping JGroups counter - no-op for now"))))
 
 (defn start!
   [test node]
-  (c/cd dir
+  (c/cd test-dir
         (cu/start-daemon!
-         {:chdir   dir
+         {:chdir   test-dir
           :logfile log-file
           :pidfile pid-file}
          "/usr/bin/java"
@@ -68,7 +69,7 @@
 
 (defn stop!
   [test node]
-  (c/cd dir
+  (c/cd test-dir
         (c/su
          (cu/stop-daemon! pid-file))))
 
@@ -85,6 +86,6 @@
   browsing results."
   [& args]
   (cli/run!
-    (merge (cli/single-test-cmd {:test-fn counter-test})
-           (cli/serve-cmd))
-    args))
+   (merge (cli/single-test-cmd {:test-fn counter-test})
+          (cli/serve-cmd))
+   args))
