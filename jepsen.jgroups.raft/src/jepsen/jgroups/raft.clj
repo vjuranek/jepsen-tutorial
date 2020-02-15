@@ -15,7 +15,7 @@
 (def counter-src "counter")
 (def counter-jar (str counter-src "/target/counter-0.1.0-SNAPSHOT-standalone.jar"))
 (def test-dir "/opt/counter")
-(def test-jar (str test-dir "counter.jar"))
+(def test-jar (str test-dir "/counter.jar"))
 (def pid-file (str test-dir "/counter.pid"))
 (def log-file (str test-dir "/counter.log"))
 
@@ -48,8 +48,8 @@
           :pidfile pid-file}
          "/usr/bin/java"
          :-jar   test-jar
-         :--port 3000
-         :--name node)))
+         :-port 3000
+         :-name node)))
 
 (defn stop-counter!
   []
