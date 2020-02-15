@@ -63,6 +63,7 @@
    db/DB
    (setup! [_ test node]
            (build-counter! test node)
+           (core/synchronize test) ;; ensure build is finished
            (debian/install-jdk11!)
            (upload!)
            (core/synchronize test) ;; ensure build is on all nodes
