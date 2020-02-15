@@ -48,6 +48,7 @@
           :pidfile pid-file}
          "/usr/bin/java"
          :-jar   test-jar
+         :--port 3000
          :--name node)))
 
 (defn stop-counter!
