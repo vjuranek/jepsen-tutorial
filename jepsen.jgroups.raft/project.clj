@@ -5,4 +5,5 @@
   :main jepsen.jgroups.raft
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [jepsen "0.1.15"]
-                 [org.jgroups/jgroups-raft "0.5.0.Final"]])
+                 [org.jgroups/jgroups-raft "0.5.0.Final"]
+                 [clj-http "3.10.0"]])

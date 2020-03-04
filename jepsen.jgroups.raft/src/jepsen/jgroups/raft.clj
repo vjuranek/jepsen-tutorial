@@ -1,16 +1,24 @@
 (ns jepsen.jgroups.raft
   (:require [clojure.tools.logging :refer :all]
+            [clj-http.client :as http]
             [clojure.string :as str]
             [clojure.java.shell :refer [sh]]
             [clojure.java.io :as io]
             [jepsen
              [cli :as cli]
+             [client :as client]
              [control :as c]
              [core :as core]
              [db :as db]
+             [generator :as gen]
              [tests :as tests]]
             [jepsen.control.util :as cu]
             [jepsen.os.debian :as debian]))
+
+(defn parse-long
+  "Parses a string to a Long. Passes through `nil`."
+  [s]
+  (when s (Long/parseLong s)))
 
 (def counter-src "counter")
 (def counter-jar (str counter-src "/target/counter-0.1.0-SNAPSHOT-standalone.jar"))
@@ -68,7 +76,6 @@
            (upload!)
            (core/synchronize test) ;; ensure build is on all nodes
            (info node "Starting JGroups counter")
-           ;(start-counter raft-config node))
            (start-counter! node))
 
    (teardown! [counter test node]
@@ -78,13 +85,38 @@
               (c/su
                (c/exec :rm :-rf log-file pid-file)))))
 
+(defn client-get   [_ _] {:type :invoke, :f :get, :value nil})
+(defn client-increment   [_ _] {:type :invoke, :f :increment, :value nil})
+
+(defn counter-client
+  [node]
+  (reify client/Client
+        (open! [client test node]
+               (counter-client node))
+
+        (setup! [client test])
+
+        (teardown! [client test])
+
+        (close! [client test])
+
+        (invoke! [client test op]
+                 (case (:f op)
+                   :get (assoc op :type :ok, :value (:body (http/get (str"http://" node ":3000"))))
+                   :increment (assoc op :type :ok, :value (:body (http/post (str"http://"  node ":3000"))))))))
+
 (defn counter-test
   [opts]
   (merge tests/noop-test
          opts
          {:name "jgroups counter"
           :os   debian/os
-          :db   (counter)}))
+          :db   (counter)
+          :client (counter-client nil)
+          :generator (->> (gen/mix [client-get client-increment])
+                          (gen/stagger 1)
+                          (gen/nemesis nil)
+                          (gen/time-limit 15))}))
 
 (defn -main
   "Handles command line arguments. Can either run a test, or a web server for
