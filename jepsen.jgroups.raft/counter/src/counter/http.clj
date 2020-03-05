@@ -18,7 +18,7 @@
 (defn handler [request]
   {:status 200
    :headers {"Content-Type" "text/html"}
-   :body (str "JGroups RAFT counter: cnt = " (cnt-val (:request-method request)))})
+   :body (str (cnt-val (:request-method request)))})
 
 (defn start-server [port, name]
   (println "Starting JGroups counter with name")
