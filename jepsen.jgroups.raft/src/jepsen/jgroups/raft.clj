@@ -102,8 +102,8 @@
 
         (invoke! [client test op]
                  (case (:f op)
-                   :get (assoc op :type :ok, :value (:body (http/get (str"http://" node ":3000"))))
-                   :increment (assoc op :type :ok, :value (:body (http/post (str"http://"  node ":3000"))))))))
+                   :get (assoc op :type :ok, :value (parse-long(:body (http/get (str"http://" node ":3000")))))
+                   :increment (assoc op :type :ok, :value (parse-long(:body (http/post (str"http://"  node ":3000")))))))))
 
 (defn counter-test
   [opts]
