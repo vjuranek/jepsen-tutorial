@@ -77,7 +77,9 @@
            (upload!)
            (core/synchronize test) ;; ensure build is on all nodes
            (info node "Starting JGroups counter")
-           (start-counter! node))
+           (start-counter! node)
+           (Thread/sleep 10000) ;; TODO: figure out better way how to ensure cluster is formed.
+           (core/synchronize test))
 
    (teardown! [counter test node]
               ;; TODO: stop jch here
