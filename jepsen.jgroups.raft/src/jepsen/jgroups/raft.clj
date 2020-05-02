@@ -85,8 +85,8 @@
               (c/su
                (c/exec :rm :-rf log-file pid-file)))))
 
-(defn client-get   [_ _] {:type :invoke, :f :get, :value nil})
-(defn client-increment   [_ _] {:type :invoke, :f :increment, :value nil})
+(defn client-get   [_ _] {:type :invoke, :f :read, :value nil})
+(defn client-increment   [_ _] {:type :invoke, :f :add, :value nil})
 
 (defn counter-client
   [node]
@@ -102,16 +102,16 @@
 
         (invoke! [client test op]
                  (case (:f op)
-                   :get (assoc op :type :ok, :value (parse-long(:body (http/get (str"http://" node ":3000")))))
-                   :increment (assoc op :type :ok, :value (parse-long(:body (http/post (str"http://"  node ":3000")))))))))
+                   :read (assoc op :type :ok,:value (parse-long(:body (http/get (str"http://" node ":3000")))))
+                   :add (assoc op :type :ok, :value (parse-long(:body (http/post (str"http://"  node ":3000")))))))))
 
 (defn counter-test
   [opts]
   (merge tests/noop-test
          opts
          {:name "jgroups counter"
-          :os   debian/os
-          :db   (counter)
+          :os debian/os
+          :db (counter)
           :client (counter-client nil)
           :generator (->> (gen/mix [client-get client-increment])
                           (gen/stagger 1)
