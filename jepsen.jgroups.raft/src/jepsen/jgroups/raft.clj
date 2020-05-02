@@ -5,6 +5,7 @@
             [clojure.java.shell :refer [sh]]
             [clojure.java.io :as io]
             [jepsen
+             [checker :as checker]
              [cli :as cli]
              [client :as client]
              [control :as c]
@@ -85,8 +86,8 @@
               (c/su
                (c/exec :rm :-rf log-file pid-file)))))
 
-(defn client-get   [_ _] {:type :invoke, :f :read, :value nil})
-(defn client-increment   [_ _] {:type :invoke, :f :add, :value nil})
+(defn client-get   [_ _] {:type :invoke, :f :read, :value 0})
+(defn client-increment   [_ _] {:type :invoke, :f :add, :value 0})
 
 (defn counter-client
   [node]
@@ -113,6 +114,7 @@
           :os debian/os
           :db (counter)
           :client (counter-client nil)
+          :checker (checker/counter)
           :generator (->> (gen/mix [client-get client-increment])
                           (gen/stagger 1)
                           (gen/nemesis nil)
