@@ -93,10 +93,10 @@
 (defn client-increment   [_ _] {:type :invoke, :f :add})
 
 (defn client-read [node]
-  (parse-long(:body (http/get (str"http://" node ":3000")))))
+  (parse-long(:body (http/get (str "http://" node ":3000")))))
 
 (defn client-add [node]
-  (http/post (str"http://" node ":3000"))
+  (http/post (str "http://" node ":3000"))
   1) ;; Increment amount, always 1.
 
 (defn counter-client
