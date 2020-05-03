@@ -54,7 +54,7 @@
     <FRAG2 frag_size="60K"  />
     <pbcast.STATE_TRANSFER />
     <raft.ELECTION election_min_interval="100" election_max_interval="500"/>
-    <raft.RAFT members="n1,n2,n3,n4,n5" raft_id="${raft_id:undefined}" resend_interval="1000"/>
+    <raft.RAFT members="n1,n2,n3,n4,n5" log_name="/opt/counter/persistent.log" raft_id="${raft_id:undefined}" resend_interval="1000"/>
     <raft.REDIRECT/>
     <raft.CLIENT bind_addr="0.0.0.0" />
 </config>

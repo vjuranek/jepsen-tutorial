@@ -27,6 +27,7 @@
 (def test-jar (str test-dir "/counter.jar"))
 (def pid-file (str test-dir "/counter.pid"))
 (def log-file (str test-dir "/counter.log"))
+(def persistent-log (str test-dir "/persistent.log"))
 
 
 (defn upload!
@@ -86,10 +87,17 @@
               (info node "Stopping JGroups counter - no-op for now")
               (stop-counter!)
               (c/su
-               (c/exec :rm :-rf log-file pid-file)))))
+               (c/exec :rm :-rf log-file pid-file persistent-log)))))
 
-(defn client-get   [_ _] {:type :invoke, :f :read, :value 0})
-(defn client-increment   [_ _] {:type :invoke, :f :add, :value 0})
+(defn client-get   [_ _] {:type :invoke, :f :read})
+(defn client-increment   [_ _] {:type :invoke, :f :add})
+
+(defn client-read [node]
+  (parse-long(:body (http/get (str"http://" node ":3000")))))
+
+(defn client-add [node]
+  (http/post (str"http://" node ":3000"))
+  1) ;; Increment amount, always 1.
 
 (defn counter-client
   [node]
@@ -105,8 +113,8 @@
 
         (invoke! [client test op]
                  (case (:f op)
-                   :read (assoc op :type :ok,:value (parse-long(:body (http/get (str"http://" node ":3000")))))
-                   :add (assoc op :type :ok, :value (parse-long(:body (http/post (str"http://"  node ":3000")))))))))
+                   :read (assoc op :type :ok, :value (client-read node))
+                   :add (assoc op :type :ok, :value (client-add node))))))
 
 (defn counter-test
   [opts]
