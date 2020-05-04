@@ -13,6 +13,7 @@
              [db :as db]
              [generator :as gen]
              [tests :as tests]]
+            [jepsen.checker.timeline :as timeline]
             [jepsen.control.util :as cu]
             [jepsen.os.debian :as debian]))
 
@@ -124,7 +125,9 @@
           :os debian/os
           :db (counter)
           :client (counter-client nil)
-          :checker (checker/counter)
+          :checker (checker/compose
+                    {:counter (checker/counter)
+                     :timeline (timeline/html)})
           :generator (->> (gen/mix [client-get client-increment])
                           (gen/stagger 1)
                           (gen/nemesis nil)
