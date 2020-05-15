@@ -12,6 +12,7 @@
              [core :as core]
              [db :as db]
              [generator :as gen]
+             [nemesis :as nemesis]
              [tests :as tests]]
             [jepsen.checker.timeline :as timeline]
             [jepsen.control.util :as cu]
@@ -125,13 +126,18 @@
           :os debian/os
           :db (counter)
           :client (counter-client nil)
+          :nemesis (nemesis/partition-random-halves)
           :checker (checker/compose
                     {:counter (checker/counter)
                      :timeline (timeline/html)})
           :generator (->> (gen/mix [client-get client-increment])
                           (gen/stagger 1)
-                          (gen/nemesis nil)
-                          (gen/time-limit 15))}))
+                          (gen/nemesis
+                           (gen/seq (cycle [(gen/sleep 5)
+                                            {:type :info, :f :start}
+                                            (gen/sleep 5)
+                                            {:type :info, :f :stop}])))
+                          (gen/time-limit 30))}))
 
 (defn -main
   "Handles command line arguments. Can either run a test, or a web server for
