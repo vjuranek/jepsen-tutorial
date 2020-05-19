@@ -115,8 +115,12 @@
 
         (invoke! [client test op]
                  (case (:f op)
-                   :read (assoc op :type :ok, :value (client-read node))
-                   :add (assoc op :type :ok, :value (client-add node))))))
+                   :read (try
+                           (assoc op :type :ok, :value (client-read node))
+                           (catch Exception e (assoc op :type :fail, :error :http-failed)))
+                   :add (try
+                          (assoc op :type :ok, :value (client-add node))
+                          (catch Exception e (assoc op :type :fail, :error :http-failed)))))))
 
 (defn counter-test
   [opts]
