@@ -89,7 +89,10 @@
               (info node "Stopping JGroups counter - no-op for now")
               (stop-counter!)
               (c/su
-               (c/exec :rm :-rf log-file pid-file persistent-log)))))
+               (c/exec :rm :-rf log-file pid-file persistent-log)))
+   db/LogFiles
+   (log-files [_ _ _]
+              [log-file])))
 
 (defn client-get   [_ _] {:type :invoke, :f :read})
 (defn client-increment   [_ _] {:type :invoke, :f :add})
